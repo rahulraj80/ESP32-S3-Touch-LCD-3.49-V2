@@ -1,0 +1,71 @@
+#ifndef USER_CONFIG_H
+#define USER_CONFIG_H
+
+// LCD uses an independent QSPI bus.
+#define LCD_HOST SPI3_HOST
+
+// System I2C bus for RTC, IMU, audio codecs, and TCA9554.
+#define ESP_SCL_NUM (GPIO_NUM_48)
+#define ESP_SDA_NUM (GPIO_NUM_47)
+
+// Touch uses an independent I2C bus.
+#define Touch_SCL_NUM (GPIO_NUM_18)
+#define Touch_SDA_NUM (GPIO_NUM_17)
+
+//  DISP
+#define EXAMPLE_PIN_NUM_LCD_CS     (GPIO_NUM_9) 
+#define EXAMPLE_PIN_NUM_LCD_PCLK   (GPIO_NUM_10)
+#define EXAMPLE_PIN_NUM_LCD_DATA0  (GPIO_NUM_11)
+#define EXAMPLE_PIN_NUM_LCD_DATA1  (GPIO_NUM_12)
+#define EXAMPLE_PIN_NUM_LCD_DATA2  (GPIO_NUM_13)
+#define EXAMPLE_PIN_NUM_LCD_DATA3  (GPIO_NUM_14)
+#define EXAMPLE_PIN_NUM_LCD_TE     (GPIO_NUM_21)
+#define EXAMPLE_PIN_NUM_LCD_RST    (-1)
+#define EXAMPLE_PIN_NUM_BK_LIGHT   (GPIO_NUM_42) 
+
+#define EXAMPLE_LCD_H_RES 172   
+#define EXAMPLE_LCD_V_RES 640 
+#define LVGL_DMA_BUFF_LEN (EXAMPLE_LCD_H_RES * 64 * 2)
+#define LVGL_SPIRAM_BUFF_LEN (EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES * 2)
+
+
+#define EXAMPLE_PIN_NUM_TOUCH_ADDR        0x3b
+#define EXAMPLE_PIN_NUM_TOUCH_RST         (-1)
+#define EXAMPLE_PIN_NUM_TOUCH_INT         (-1)
+
+// SD card, native 1-bit SDMMC mode
+#define EXAMPLE_PIN_NUM_SD_CS      (GPIO_NUM_38)  // CD/D3, not used in 1-bit mode
+#define EXAMPLE_PIN_NUM_SD_MOSI    (GPIO_NUM_39)  // SDMMC CMD
+#define EXAMPLE_PIN_NUM_SD_MISO    (GPIO_NUM_40)  // SDMMC D0
+#define EXAMPLE_PIN_NUM_SD_SCLK    (GPIO_NUM_41)  // SDMMC CLK
+
+// Other ESP32-S3 GPIOs from ESP32-S3-Touch-LCD-3.49 V1.1 schematic
+#define EXAMPLE_PIN_NUM_BOOT0      (GPIO_NUM_0)
+#define EXAMPLE_PIN_NUM_EXIO_INT   (GPIO_NUM_8)
+#define EXAMPLE_PIN_NUM_BAT_ADC    (GPIO_NUM_4)
+#define EXAMPLE_PIN_NUM_SYS_OUT    (GPIO_NUM_16)
+
+// TCA9554 I/O expander pins
+#define EXAMPLE_EXIO_PIN_TOUCH_INT (1ULL << 0)
+#define EXAMPLE_EXIO_PIN_BL_EN     (1ULL << 1)
+#define EXAMPLE_EXIO_PIN_IMU_INT1  (1ULL << 2)
+#define EXAMPLE_EXIO_PIN_IMU_INT2  (1ULL << 3)
+#define EXAMPLE_EXIO_PIN_RTC_INT   (1ULL << 4)
+#define EXAMPLE_EXIO_PIN_LCD_RST   (1ULL << 5)
+#define EXAMPLE_EXIO_PIN_SYS_EN    (1ULL << 6)
+#define EXAMPLE_EXIO_PIN_NS_MODE   (1ULL << 7)
+
+
+#define EXAMPLE_LVGL_TICK_PERIOD_MS    5
+#define EXAMPLE_LVGL_TASK_MAX_DELAY_MS 500
+#define EXAMPLE_LVGL_TASK_MIN_DELAY_MS 5
+
+
+
+/*ADDR*/
+#define EXAMPLE_RTC_ADDR 0x51
+
+#define EXAMPLE_IMU_ADDR 0x6b
+
+
+#endif
