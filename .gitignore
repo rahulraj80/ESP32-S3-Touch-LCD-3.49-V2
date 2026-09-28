@@ -1,0 +1,6 @@
+build/
+**/build/
+managed_components/
+**/managed_components/
+*.pyc
+__pycache__/

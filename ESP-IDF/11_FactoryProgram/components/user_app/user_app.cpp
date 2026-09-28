@@ -18,6 +18,7 @@
 #include "ble_scan_bsp.h"
 #include "esp_io_expander_tca9554.h"
 #include "user_audio_bsp.h"
+#include "remote_ui_control.h"
 
 lv_ui src_ui;
 esp_io_expander_handle_t io_expander = NULL;
@@ -137,6 +138,8 @@ void user_app_init(void)
   	lv_obj_add_event_cb(src_ui.screen_slider_1, lvgl_obj_event_callback, LV_EVENT_ALL, &src_ui); 
 	lv_obj_add_event_cb(src_ui.screen_btn_1, audio_Test_Callback, LV_EVENT_ALL, &src_ui); 
 	lv_obj_add_event_cb(src_ui.screen_btn_2, audio_Test_Callback, LV_EVENT_ALL, &src_ui);
+
+    start_usb_remote_control(&src_ui);
 }
 
 static void example_test_touch_task(void *arg)
@@ -423,12 +426,14 @@ static void lvgl_obj_event_callback(lv_event_t *e)
   	lv_obj_t * module = e->current_target;
   	switch (code)
   	{
+  	  case LV_EVENT_VALUE_CHANGED:
   	  case LV_EVENT_CLICKED:
   	  {
   	    if(module == ui->screen_slider_1)
   	    {
   	      uint8_t value = lv_slider_get_value(module);
   	      setUpduty(0xff - value);
+  	      ESP_LOGI("USER_APP", "[AGY-EVENT][SLIDER] Brightness changed: %d/255 (%.1f%%)", value, (value * 100.0f) / 255.0f);
   	    }
   	    break;
   	  }

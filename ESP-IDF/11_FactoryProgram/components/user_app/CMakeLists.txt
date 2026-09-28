@@ -1,5 +1,5 @@
 idf_component_register(
-  SRCS "user_app.cpp"
+  SRCS "user_app.cpp" "remote_ui_control.cpp"
   PRIV_REQUIRES 
   main 
   ble_scan_bsp 

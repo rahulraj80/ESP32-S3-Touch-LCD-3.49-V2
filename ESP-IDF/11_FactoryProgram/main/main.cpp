@@ -30,12 +30,14 @@ extern esp_io_expander_handle_t io_expander;
 
 #define LCD_BIT_PER_PIXEL (16)
    
+extern volatile bool g_sim_touch_active;
+extern volatile uint16_t g_sim_touch_x;
+extern volatile uint16_t g_sim_touch_y;
+extern esp_lcd_panel_handle_t g_panel_handle;
 
-
+extern "C" bool example_lvgl_lock(int timeout_ms);
+extern "C" void example_lvgl_unlock(void);
 static void example_lvgl_touch_cb(lv_indev_drv_t *drv, lv_indev_data_t *data);
-
-static bool example_lvgl_lock(int timeout_ms);
-static void example_lvgl_unlock(void);
 static void example_lvgl_flush_cb(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_map);
 void example_lvgl_port_task(void *arg);
 static void example_lcd_pwm_off_early(void);
@@ -100,6 +102,7 @@ static void example_lcd_backlight_set(bool enable)
 
 extern "C" void app_main(void)
 {
+  esp_log_level_set("i2c.master", ESP_LOG_NONE);
   lvgl_flush_semap = xSemaphoreCreateBinary();
   example_lcd_pwm_off_early();
   i2c_master_Init();
@@ -148,6 +151,7 @@ extern "C" void app_main(void)
     ESP_LOGI(TAG, "Install panel driver");
     ESP_ERROR_CHECK(esp_lcd_new_panel_axs15231b(panel_io, &panel_config, &panel));
 
+    g_panel_handle = panel;
     example_lcd_reset();
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel));
 
@@ -182,7 +186,7 @@ extern "C" void app_main(void)
   	indev_drv.read_cb = example_lvgl_touch_cb;
   	lv_indev_drv_register(&indev_drv);
 
-  	lvgl_mux = xSemaphoreCreateMutex();
+  	lvgl_mux = xSemaphoreCreateRecursiveMutex();
   	assert(lvgl_mux);
   	xTaskCreatePinnedToCore(example_lvgl_port_task, "LVGL", 4000, NULL, 4, NULL,0); //运行于内核_0
   	if (example_lvgl_lock(-1))
@@ -221,16 +225,16 @@ static void example_lvgl_flush_cb(lv_disp_drv_t *drv, const lv_area_t *area, lv_
   xSemaphoreTake(lvgl_flush_semap,portMAX_DELAY);
   lv_disp_flush_ready(drv);
 }
-static bool example_lvgl_lock(int timeout_ms)
+extern "C" bool example_lvgl_lock(int timeout_ms)
 {
   const TickType_t timeout_ticks = (timeout_ms == -1) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
-  return xSemaphoreTake(lvgl_mux, timeout_ticks) == pdTRUE;       
+  return xSemaphoreTakeRecursive(lvgl_mux, timeout_ticks) == pdTRUE;       
 }
 
-static void example_lvgl_unlock(void)
+extern "C" void example_lvgl_unlock(void)
 {
   assert(lvgl_mux && "bsp_display_start must be called first");
-  xSemaphoreGive(lvgl_mux);
+  xSemaphoreGiveRecursive(lvgl_mux);
 }
 void example_lvgl_port_task(void *arg)
 {
@@ -256,7 +260,13 @@ void example_lvgl_port_task(void *arg)
 
 static void example_lvgl_touch_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
 {
-  //static uint8_t read_touchpad_cmd[8] = {0xb5, 0xab, 0xa5, 0x5a, 0x0, 0x0, 0x0, 0x8};
+  if (g_sim_touch_active) {
+    data->state = LV_INDEV_STATE_PR;
+    data->point.x = g_sim_touch_x;
+    data->point.y = g_sim_touch_y;
+    return;
+  }
+
   uint8_t read_touchpad_cmd[11] = {0xb5, 0xab, 0xa5, 0x5a, 0x0, 0x0, 0x0, 0x0e,0x0, 0x0, 0x0};
   uint8_t buff[32] = {0};
   memset(buff,0,32);
@@ -268,7 +278,6 @@ static void example_lvgl_touch_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
   uint16_t pointY;
   pointX = (((uint16_t)buff[2] & 0x0f) << 8) | (uint16_t)buff[3];
   pointY = (((uint16_t)buff[4] & 0x0f) << 8) | (uint16_t)buff[5];
-  //ESP_LOGI("Touch","%d,%d",buff[0],buff[1]);
   if (buff[1]>0 && buff[1]<5)
   {
     data->state = LV_INDEV_STATE_PR;
@@ -276,6 +285,7 @@ static void example_lvgl_touch_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
     if(pointY > EXAMPLE_LCD_H_RES) pointY = EXAMPLE_LCD_H_RES;
     data->point.x = pointY;
     data->point.y = (EXAMPLE_LCD_V_RES-pointX);
+    ESP_LOGI("TOUCH", "[AGY-EVENT][TOUCH] Physical Touch at (%d, %d)", data->point.x, data->point.y);
 	/*touch test*/
 	app_touch_t user_touch_data;
 	user_touch_data.x = data->point.x;
